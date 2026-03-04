@@ -3,7 +3,7 @@
 set -euo pipefail
 
 # Default values
-OUTPUT_FILE="context.md"
+OUTPUT_FILE=""
 AGENT=""
 MODEL=""
 SESSION=""
@@ -21,7 +21,7 @@ Required:
 
 Optional:
   --session SESSION   Session identifier
-  --output FILE       Output context file (default: context.md)
+  --output FILE       Output context file (default: <git-root>/project/context.md)
   --file FILE         Read body from file
   
 Body input (priority order):
@@ -75,6 +75,15 @@ done
 if [[ -z "$AGENT" ]] || [[ -z "$MODEL" ]]; then
     echo "Error: --agent and --model are required" >&2
     usage
+fi
+
+# Resolve output file path (default: git repo root project/context.md)
+if [[ -z "$OUTPUT_FILE" ]]; then
+    if git rev-parse --git-dir > /dev/null 2>&1; then
+        OUTPUT_FILE="$(git rev-parse --show-toplevel)/project/context.md"
+    else
+        OUTPUT_FILE="context.md"
+    fi
 fi
 
 # Get body text from appropriate source
@@ -149,3 +158,13 @@ fi
 echo "$ENTRY" >> "$OUTPUT_FILE"
 
 echo "Entry added to $OUTPUT_FILE" >&2
+
+# Auto-rotate if the file exceeds its size threshold
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [[ -x "$SCRIPT_DIR/rotate-context" ]]; then
+    ROTATE_RC=0
+    "$SCRIPT_DIR/rotate-context" --file "$OUTPUT_FILE" > /dev/null || ROTATE_RC=$?
+    if [[ $ROTATE_RC -eq 2 ]]; then
+        echo "Warning: rotate-context encountered an error" >&2
+    fi
+fi
