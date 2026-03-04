@@ -1,13 +1,13 @@
-# Project System Runbook
+# DOA Framework Runbook
 
 This document describes the complete project creation and development workflow.
-It covers the tools, repositories, conventions, and the decisions behind them.
+It covers the tools, conventions, and the decisions behind them.
 
 ---
 
 ## Overview
 
-Every project is bootstrapped by a single script — `dob` — which evaluates a
+Every project is bootstrapped by a single script — `doa` — which evaluates a
 target directory and adopts it into the DOA Framework, regardless of what it
 finds there:
 
@@ -19,40 +19,26 @@ One command, one path, behaviour determined by what's found at the target.
 
 ---
 
-## Why "dob" and "DOA"?
-
-`dob` stands for **DOA Bootstrap**. `DOA` stands for **Development Operating
-Agreement** — the contract between you and any AI agent working on a project.
-These names are intentional, not a typo.
-
----
-
-## Repositories
-
-| Repo | Purpose |
-|------|---------|
-| `brentrockwood/dob` | This repo. The `dob` script and devcontainer templates. |
-| `brentrockwood/doa` | The DOA Framework: `doa.md`, `project/scripts/`. |
-| `brentrockwood/prjTemplate` | The project scaffold. Used as a reference template. |
-| `brentrockwood/dotfiles` | Shell environment. Installed into every devcontainer. |
-| `brentrockwood/<project>` | Each project created by `dob`. Private by default. |
-
----
-
 ## Prerequisites
 
-The following must be installed on your Mac before using `dob`:
+You need `git`, `gh` (GitHub CLI), `devpod`, and Bash 4+.
 
+**macOS (Homebrew):**
 ```bash
-# Package manager
-brew install gh git
-
-# DevPod CLI
-brew install devpod
-
-# Authenticate GitHub CLI
-gh auth login
+brew install git gh devpod bash
 ```
+
+**Debian/Ubuntu:**
+```bash
+apt install git
+# gh: https://github.com/cli/cli/blob/trunk/docs/install_linux.md
+# devpod: https://devpod.sh/docs/getting-started/install
+# bash 4+ is the default on most Linux distributions
+```
+
+For other systems, install these tools using your package manager of choice.
+`devpod` provides binaries for Linux, macOS, and Windows at
+[devpod.sh](https://devpod.sh/docs/getting-started/install).
 
 Verify everything is ready:
 
@@ -60,37 +46,60 @@ Verify everything is ready:
 gh auth status
 devpod version
 git --version
+bash --version   # must be 4+
 ```
 
-`dob` also requires **Bash 4+**. macOS ships with Bash 3. Install the current
-version via Homebrew:
+Authenticate with GitHub if you haven't already:
 
 ```bash
-brew install bash
+gh auth login
 ```
+
+---
+
+## Dotfiles
+
+DevPod can inject your dotfiles into every devcontainer it creates. Configure
+this once and it applies to all workspaces automatically:
+
+```bash
+devpod context set-options --dotfiles-url https://github.com/<you>/dotfiles
+```
+
+See the [DevPod dotfiles documentation](https://devpod.sh/docs/developing-in-workspaces/dotfiles-in-a-workspace)
+for full details, including support for install scripts and different shell
+configurations.
+
+The devcontainers in this framework are intentionally minimal — they install
+stack tooling but leave shell environment to your dotfiles.
 
 ---
 
 ## Installation
 
 ```bash
-# Clone this repo
-git clone git@github.com:brentrockwood/dob.git ~/dob
+# Fork or clone this repo
+git clone git@github.com:<owner>/doa-framework.git ~/doa-framework
 
-# Symlink the script into your PATH
-ln -s ~/dob/dob ~/bin/dob
-chmod +x ~/bin/dob
+# Make the script available on your PATH.
+# The simplest approach: symlink it somewhere already on your PATH.
+ln -s ~/doa-framework/doa /usr/local/bin/doa   # may require sudo
 
-# Make sure ~/bin is in PATH — add to ~/.zshrc.local if not already:
-# export PATH="$HOME/bin:$PATH"
+# Alternatively, add a local bin directory to your PATH and symlink there:
+mkdir -p ~/bin
+ln -s ~/doa-framework/doa ~/bin/doa
+# Then add to your shell profile: export PATH="$HOME/bin:$PATH"
 ```
+
+How you manage your PATH is up to you. The script just needs to be executable
+and findable.
 
 ---
 
 ## Usage
 
 ```
-dob <path> [--dry-run] [--force] [--remote]
+doa <path> [--dry-run] [--force] [--remote <host>]
 ```
 
 | Argument | Description |
@@ -98,7 +107,7 @@ dob <path> [--dry-run] [--force] [--remote]
 | `<path>` | Target directory. Created if it does not exist. |
 | `--dry-run` | Evaluate and print the migration plan. No files written, no git state modified. |
 | `--force` | Bypass hard fails after an explicit per-fail confirmation prompt. |
-| `--remote` | Use `dh1` SSH DevPod provider instead of local Docker. |
+| `--remote <host>` | Use a remote SSH host as the DevPod provider instead of local Docker. |
 
 There are no subcommands. The path determines everything.
 
@@ -107,10 +116,10 @@ There are no subcommands. The path determines everything.
 ## Bootstrapping a New Project
 
 ```bash
-dob ~/src/my-cool-tool
+doa ~/src/my-cool-tool
 ```
 
-`dob` evaluates the (empty) directory and runs the full bootstrap:
+`doa` evaluates the (empty) directory and runs the full bootstrap:
 
 ```
 1.  Evaluate:      check uncommitted files, partial adoption, security, gh auth, stack
@@ -120,29 +129,39 @@ dob ~/src/my-cool-tool
 5.  Write:         project/doa.md, project/project.md, .gitignore, secrets.env.example
 6.  Git:           initialise repo, branch: main
 7.  Context:       first entry written to project/context.md
-8.  Commit:        DOB: Initial DOA framework scaffold
+8.  Commit:        DOA: Initial DOA framework scaffold
 9.  GitHub:        private repo created, main + initial-scaffold branches pushed
 10. DevPod:        workspace created (local Docker by default)
 11. PR:            initial-scaffold → main
 ```
 
-### Remote option (dh1)
+### Remote DevPod
+
+If you have a remote machine available as a DevPod SSH provider, you can run
+the workspace there instead of locally:
 
 ```bash
-dob ~/src/my-cool-tool --remote
+# Add your remote host as a DevPod SSH provider (one-time setup)
+devpod provider add ssh
+devpod provider configure ssh --option HOST=<your-host>
+
+# Then pass --remote when bootstrapping
+doa ~/src/my-cool-tool --remote <your-host>
 ```
 
-Uses `dh1` (SSH provider) instead of local Docker.
+The remote host needs Docker installed and your SSH key authorized. See the
+[DevPod SSH provider docs](https://devpod.sh/docs/managing-providers/add-provider)
+for setup details.
 
 ---
 
 ## Adopting an Existing Project
 
 ```bash
-dob ~/src/existing-project
+doa ~/src/existing-project
 ```
 
-`dob` detects what DOA components are missing and adds only those. An existing
+`doa` detects what DOA components are missing and adds only those. An existing
 git history and GitHub remote are preserved. A PR is opened for the new DOA
 files.
 
@@ -151,7 +170,7 @@ files.
 ## Dry Run
 
 ```bash
-dob ~/src/any-project --dry-run
+doa ~/src/any-project --dry-run
 ```
 
 Runs the full evaluation and prints the migration plan. Makes no changes to
@@ -162,16 +181,16 @@ files, git state, or GitHub.
 ## Forcing Past Failures
 
 ```bash
-dob ~/src/dirty-project --force
+doa ~/src/dirty-project --force
 ```
 
 If evaluation finds hard failures (uncommitted files, partial adoption,
-security findings), `dob` normally exits 1. With `--force`, it prompts once
+security findings), `doa` normally exits 1. With `--force`, it prompts once
 per failure and proceeds if you confirm. Each prompt is explicit about the risk.
 
 ---
 
-## What happens after `dob`
+## What Happens After `doa`
 
 ```bash
 # SSH into the devcontainer
@@ -186,21 +205,8 @@ project/scripts/read-context        # see what was done at creation
 
 ## Inside the Container
 
-Every devcontainer has:
-
-| Tool | Notes |
-|------|-------|
-| zsh | Default shell, vi mode, Starship prompt |
-| neovim | `vi` alias, config from dotfiles |
-| tmux | Config from dotfiles |
-| zoxide | `z` for directory jumping |
-| fzf | History search, completion |
-| starship | Prompt |
-| gh | GitHub CLI |
-| trufflehog | Deep secrets scanning |
-| git | Pre-installed |
-
-Plus stack-specific tools:
+Stack-specific tools are installed by `postCreate.sh`. Shell environment
+(prompt, aliases, editor config) comes from your dotfiles.
 
 **Python:**
 - `uv` — fast package/project manager (replaces pip/venv/pyenv)
@@ -212,14 +218,14 @@ Plus stack-specific tools:
 - TypeScript (`tsc`), ts-node
 
 **Go:**
-- Go toolchain via `mise` or direct install
+- Go toolchain
 - `gopls`, `golangci-lint`
 
 ---
 
 ## Project Structure
 
-Every project created by `dob` has this layout:
+Every project created by `doa` has this layout:
 
 ```
 <project>/
@@ -310,7 +316,7 @@ Run it:
 
 Exit codes: `0` = clean, `1` = issues found, `2` = script error.
 
-`dob` runs this scan during evaluate and will hard-fail (exit 1) if issues
+`doa` runs this scan during evaluate and will hard-fail (exit 1) if issues
 are found. Use `--force` to bypass after confirmation.
 
 ---
@@ -330,38 +336,25 @@ release gate:
 
 ---
 
-## Updating the Template
+## Customising the Framework
 
-When you improve the template (e.g. add a tool, fix a script, update the DOA):
+The framework is designed to be forked. After forking, the main things you'll
+want to adapt are:
 
-```bash
-cd ~/dob   # or wherever you keep it
-# make changes
-git add -A
-git commit -m "describe what changed"
-git push
-```
+- **`project/doa.md`** — the operating agreement itself. Edit it to match your
+  workflow, branching conventions, and agent preferences.
+- **`template/`** — the project scaffold. Add, remove, or restructure files to
+  match your conventions.
+- **`postCreate.sh`** — what gets installed in each devcontainer. Add tools,
+  remove ones you don't use.
+- **`devcontainers/`** — per-stack `devcontainer.json` files. Extend or add
+  stacks here.
 
-New projects created after the push will automatically get the improvements.
-Existing projects do **not** auto-update — that's intentional.
-
----
-
-## Updating the Devcontainer
-
-If `postCreate.sh` or `devcontainer.json` changes in this repo:
+New projects created after a change will automatically get it. Existing
+projects do **not** auto-update — that's intentional. To apply devcontainer
+changes to an existing workspace:
 
 ```bash
-cd ~/dob
-git add -A
-git commit -m "DevContainer: describe what changed"
-git push
-```
-
-To apply the change to an existing workspace:
-
-```bash
-# On the host:
 devpod up <project-name> --recreate
 ```
 
@@ -369,32 +362,11 @@ devpod up <project-name> --recreate
 
 ## Adding a New Stack
 
-To add a new stack (e.g. Rust):
-
-1. Create `devcontainers/rust/devcontainer.json` in this repo
-2. Add a `rust)` case to `postCreate.sh` that installs Rust tools
-3. Add stack detection to `check_stack()` in the `dob` script
+1. Create `devcontainers/<stack>/devcontainer.json`
+2. Add a `<stack>)` case to `postCreate.sh` that installs the relevant tools
+3. Add stack detection to `check_stack()` in the `doa` script
 4. Add a gitignore block for the stack to `step_write_gitignore()`
-5. Commit and push this repo
-
----
-
-## dh1 (Remote Docker)
-
-`dh1` is an LXC on the Proxmox rack. Use it via the SSH provider:
-
-```bash
-devpod provider add ssh
-```
-
-Then pass `--remote` to `dob`:
-
-```bash
-dob ~/src/my-project --remote
-```
-
-This passes `--provider ssh --provider-option HOST=dh1` to `devpod up`.
-dh1 must have Docker installed and your SSH key authorized.
+5. Commit and push
 
 ---
 
@@ -404,38 +376,40 @@ dh1 must have Docker installed and your SSH key authorized.
 
 ```bash
 gh auth login
-# Choose: GitHub.com → SSH → browser auth
 ```
 
 ### `devpod: command not found`
 
-```bash
-brew install devpod
-# or download from https://devpod.sh
-```
+Install DevPod for your platform: [devpod.sh](https://devpod.sh/docs/getting-started/install)
 
 ### `devpod up` fails: Docker not running
 
+Start Docker on your machine and retry. On macOS:
+
 ```bash
-open -a Docker   # start Docker Desktop on Mac
-# wait for the whale to settle, then retry
+open -a Docker
 ```
 
-### `dob` requires Bash 4+ but macOS has Bash 3
+### `doa` fails: Bash version too old
+
+```bash
+bash --version   # must be 4+
+```
+
+On macOS, install a current version via Homebrew:
 
 ```bash
 brew install bash
-# then invoke as: /opt/homebrew/bin/bash ~/dob/dob <path>
-# or ensure Homebrew bash is first in PATH
+# Ensure it's first in PATH, or invoke directly:
+/opt/homebrew/bin/bash ~/doa-framework/doa <path>
 ```
 
-### Container builds but `.zshrc` errors on startup
+### Container builds but shell errors on startup
 
-Your `.zshrc` expects `zoxide`, `fzf`, and `starship` to be installed.
-`postCreate.sh` installs them, but if it failed partway through:
+If `postCreate.sh` failed partway through, re-run it manually inside the
+container:
 
 ```bash
-# Inside the container:
 bash /workspaces/<project>/.devcontainer/postCreate.sh
 ```
 
@@ -451,19 +425,16 @@ chmod +x project/scripts/add-context \
 
 ## Environment Variables
 
-All configuration in `dob` is overridable via environment variables.
-Add these to `~/.zshrc.local` to change defaults:
+All configuration in `doa` is overridable via environment variables.
+Add these to your shell profile to change defaults:
 
 ```bash
-# GitHub username (default: brentrockwood)
-export NEW_PROJECT_GITHUB_USER="brentrockwood"
+# Your GitHub username
+export NEW_PROJECT_GITHUB_USER="your-username"
 
-# Template repo to reference (default: github.com/brentrockwood/prjTemplate)
-export NEW_PROJECT_TEMPLATE="github.com/brentrockwood/prjTemplate"
+# Template repo to clone as fallback if local template/ is absent
+export NEW_PROJECT_TEMPLATE="github.com/<owner>/doa-framework"
 
-# Where new projects land on your Mac (default: ~/src)
+# Where new projects are created (default: ~/src)
 export NEW_PROJECT_SRC_DIR="$HOME/src"
-
-# DOA repo for scripts/doa.md source (default: brentrockwood/doa)
-export DOB_DOA_REPO="brentrockwood/doa"
 ```
