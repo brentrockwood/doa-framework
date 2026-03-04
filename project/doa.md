@@ -145,7 +145,7 @@ Wherever appropriate, use pure functions. They are easier to test.
 
 ### Source code location 
 
-All new source code goes in ./src unless an explicit decision recorded in project.md specifies a different location. Do not create new top-level directories without human authorization.
+All new source code goes in `./src` unless an explicit decision recorded in project.md specifies a different location. Do not create new top-level directories without human authorization.
 
 ### Dependencies
 
