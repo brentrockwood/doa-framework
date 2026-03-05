@@ -80,7 +80,7 @@ load 'test_helper'
 @test "empty-body: empty stdin exits non-zero with error message" {
   run bash -c "'$SCRIPTS_DIR/add-context' --agent 'A' --model 'M' --output '$BATS_TEST_TMPDIR/out.md' < /dev/null 2>&1"
   [[ "$status" -ne 0 ]]
-  [[ "$output" == *"mpty"* ]] || [[ "$output" == *"Error"* ]]
+  echo "$output" | grep -qi "empty"
 }
 
 @test "empty-body: --file pointing to empty file exits non-zero with error message" {
@@ -89,7 +89,7 @@ load 'test_helper'
 
   run bash -c "'$SCRIPTS_DIR/add-context' --agent 'A' --model 'M' --output '$BATS_TEST_TMPDIR/out.md' --file '$empty' 2>&1"
   [[ "$status" -ne 0 ]]
-  [[ "$output" == *"mpty"* ]] || [[ "$output" == *"Error"* ]]
+  echo "$output" | grep -qi "empty"
 }
 
 # ── required-arg validation (Task 3b) ─────────────────────────────────────────

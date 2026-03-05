@@ -98,8 +98,8 @@ outside a git repo.
 
 Task 2 covers the three focused areas of `add-context`. This task adds full
 coverage across all scripts in `project/scripts/`. Tests live in `tests/` and
-share a common helper in `tests/test_helper.bash` (sets up isolated temp git
-repos and sources bats-support/bats-assert).
+share a common helper in `tests/test_helper.bash` (provides `make_git_repo`
+and `write_context_entries` utilities; no bats-support/bats-assert dependency).
 
 **`add-context` — beyond Task 2 scope** (`tests/add-context.bats`, extended)
 

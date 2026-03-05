@@ -77,3 +77,21 @@ Branch: task/3-read-context-git-root
 
 EOF
 
+
+---
+date: 2026-03-05T18:54:02-0500
+hash: qeMkSQYioL2rBdBko9+K1Gc1NJcBm6lzmLyqP6kYOxs=
+agent: Claude Code
+model: claude-sonnet-4-6
+startCommit: 6a705bc3de87ace4a495fb03f85815967b3ec7f8
+---
+
+Address CodeRabbit findings on PR #3.
+
+- project/project.md: corrected description of tests/test_helper.bash — it does not source bats-support/bats-assert; now accurately describes make_git_repo and write_context_entries utilities
+- tests/add-context.bats: tightened empty-body assertions to use grep -qi "empty" instead of loose *"mpty"*||*"Error"* pattern
+
+59/59 tests still passing. Branch: task/3-read-context-git-root
+
+EOF
+
