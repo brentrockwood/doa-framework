@@ -84,10 +84,80 @@ Each test should set up an isolated temporary git repo, run the script, make
 assertions, and clean up. Use BATS helper libraries (`bats-support`,
 `bats-assert`) if they simplify assertions.
 
-### 3. Fix `project/scripts/read-context` — git-root resolution
+### 3. Fix `project/scripts/read-context` + BATS tests for all scripts
 
-`read-context` defaults to `./context.md` in the current directory, the same
-class of bug fixed in `add-context` (Task 1b). It should resolve its default
-file path to `$(git rev-parse --show-toplevel)/project/context.md` when inside
-a git repo, with `--file` as the explicit override. Outside a git repo it should
-fall back to `./context.md`.
+#### 3a. git-root resolution in `read-context` ✓ Complete (commit 79205c3)
+
+`read-context` defaulted to `./context.md` in the current directory — the same
+class of bug fixed in `add-context` (Task 1b). It now resolves its default file
+path to `$(git rev-parse --show-toplevel)/project/context.md` when inside a git
+repo, with `--file` as the explicit override, and falls back to `./context.md`
+outside a git repo.
+
+#### 3b. BATS test suites — all scripts
+
+Task 2 covers the three focused areas of `add-context`. This task adds full
+coverage across all scripts in `project/scripts/`. Tests live in `tests/` and
+share a common helper in `tests/test_helper.bash` (sets up isolated temp git
+repos and sources bats-support/bats-assert).
+
+**`add-context` — beyond Task 2 scope** (`tests/add-context.bats`, extended)
+
+- **Required-arg validation**: missing `--agent` → non-zero exit + stderr error;
+  same for missing `--model`.
+- **Body input methods**: positional arg, `--file` (non-empty file), and stdin
+  each produce a correctly written entry.
+- **`--session` field**: when `--session` is passed, the session line appears in
+  the header; when omitted, it does not.
+- **Entry format**: written entry contains correct `date`, `hash`, `agent`,
+  `model`, and `startCommit` fields in expected positions.
+- **Append behaviour**: second call appends a new entry; a blank-line separator
+  appears between entries; first call creates the file.
+- **`--file` not found**: exits non-zero with a clear stderr message.
+
+**`read-context`** (`tests/read-context.bats`)
+
+- **git-root resolution**: invoking from a subdirectory (no `--file`) reads
+  `<repo-root>/project/context.md`; `--file` overrides; outside a git repo
+  falls back to `./context.md`.
+- **Default read**: no flags → prints last entry.
+- **`-n N`**: prints the last N entries in order.
+- **`--headers-only` / `-h`**: output contains header block but not body text.
+- **Combined `-n N -h`**: headers of last N entries.
+- **Error — file not found**: exits non-zero with stderr message.
+- **Error — invalid `-n`**: non-integer or zero → non-zero exit + stderr.
+- **Error — unknown option**: non-zero exit.
+
+**`rotate-context`** (`tests/rotate-context.bats`)
+
+- **No rotation needed** (file under size limit): exits 1, file unchanged.
+- **Rotation occurs** (file over limit, enough entries): exits 0; overflow file
+  created; original file contains exactly `--keep` most-recent entries; all
+  older entries appear in the overflow file.
+- **Over limit but ≤ keep entries**: warning to stderr, exits 1, no overflow
+  file created.
+- **File not found**: exits 2 with stderr message.
+- **Custom `--size` and `--keep`**: both flags respected in rotation logic.
+
+**`add-session-entry`** (`tests/add-session-entry.bats`)
+
+- **Required-arg validation**: missing `--agent` or `--model` → exit 1 +
+  stderr; invalid `--type` value → exit 1 + stderr.
+- **Body input methods**: positional arg, `--file`, stdin each write a valid
+  entry.
+- **Empty body**: exits 1 with stderr error regardless of input method.
+- **`--file` not found**: exits 1 with stderr error.
+- **File initialisation**: when output file does not exist, it is created with
+  the standard header before the first entry.
+- **Append behaviour**: second call appends without reinitialising the header.
+- **Entry format**: output contains `[$TYPE]`, agent, model, and date fields.
+
+**`notify`** (`tests/notify.bats`)
+
+- **No args**: exits 1 with usage message on stderr.
+- **Mocked success path**: stub `curl` to return `{"ok":true}`; script exits 0.
+- **Mocked API-error path**: stub `curl` to return `{"ok":false,"description":"bad token"}`; script exits 1 with the description on stderr.
+- **Network failure (empty response)**: stub `curl` to return empty string;
+  script exits 1.
+- Note: tests stub `curl` via a wrapper script injected at the front of `PATH`;
+  no real Telegram credentials required.

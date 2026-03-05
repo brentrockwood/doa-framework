@@ -53,3 +53,27 @@ Branch: task/3-read-context-git-root
 
 EOF
 
+
+---
+date: 2026-03-05T15:47:19-0500
+hash: DcqeCHxOWNabmghuqpLeH+6ngDHw3MgYcXPInKbs4jY=
+agent: Claude Code
+model: claude-sonnet-4-6
+startCommit: 79205c303255f28322f00a0ce0d2b7d6523c8c62
+---
+
+Tasks 2 and 3b complete. Wrote 59 passing BATS tests across 5 suites covering all scripts in project/scripts/:
+
+- tests/test_helper.bash: shared helpers (make_git_repo, write_context_entries)
+- tests/add-context.bats (18 tests): Task 2 scope (git-root resolution, auto-rotate, empty body) + Task 3b extras (arg validation, body inputs, --session field, entry format, append behaviour)
+- tests/read-context.bats (12 tests): git-root resolution, read/header modes, error cases
+- tests/rotate-context.bats (11 tests): no-rotation, rotation, overflow correctness, custom flags, error cases
+- tests/add-session-entry.bats (12 tests): arg validation, body inputs, file init/append, entry format
+- tests/notify.bats (4 tests): no-args guard, mocked curl success/error/empty-response paths
+
+Also updated project.md: merged Tasks 3 and 4 into a single Task 3 (3a: read-context fix [done], 3b: BATS suites). bats-core installed via brew (1.13.0); no bats-support/bats-assert dependency needed.
+
+Branch: task/3-read-context-git-root
+
+EOF
+
