@@ -34,3 +34,22 @@ Next: security scan, commit project.md + add-context changes + this context entr
 
 EOF
 
+
+---
+date: 2026-03-04T18:58:43-0500
+hash: f2RId9CGN0tojq7wAqOeZIY7YUUU+k6QSw7j8AEUMZs=
+agent: Claude Code
+model: claude-sonnet-4-6
+startCommit: 57f3d346905bd1422d906ea6f2ce9d6aa8840c37
+---
+
+Task 3: read-context now resolves its default file to $(git rev-parse --show-toplevel)/project/context.md when inside a git repo, falling back to ./context.md outside one. --file still overrides. Same pattern as Task 1b for add-context.
+
+Also re-applied two changes that were committed locally but not pushed before PR #1 was merged:
+- add-context: cache IN_GIT_REPO variable (CodeRabbit finding from PR #1)
+- project.md: BATS testing decision + Task 2 + Task 3 task descriptions
+
+Branch: task/3-read-context-git-root
+
+EOF
+
