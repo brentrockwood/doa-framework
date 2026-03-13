@@ -44,6 +44,62 @@ startCommit: 57f3d346905bd1422d906ea6f2ce9d6aa8840c37
 ---
 
 Update DOA and gitignore.
+date: 2026-03-04T18:58:43-0500
+hash: f2RId9CGN0tojq7wAqOeZIY7YUUU+k6QSw7j8AEUMZs=
+agent: Claude Code
+model: claude-sonnet-4-6
+startCommit: 57f3d346905bd1422d906ea6f2ce9d6aa8840c37
+---
+
+Task 3: read-context now resolves its default file to $(git rev-parse --show-toplevel)/project/context.md when inside a git repo, falling back to ./context.md outside one. --file still overrides. Same pattern as Task 1b for add-context.
+
+Also re-applied two changes that were committed locally but not pushed before PR #1 was merged:
+- add-context: cache IN_GIT_REPO variable (CodeRabbit finding from PR #1)
+- project.md: BATS testing decision + Task 2 + Task 3 task descriptions
+
+Branch: task/3-read-context-git-root
+
+EOF
+
+
+---
+date: 2026-03-05T15:47:19-0500
+hash: DcqeCHxOWNabmghuqpLeH+6ngDHw3MgYcXPInKbs4jY=
+agent: Claude Code
+model: claude-sonnet-4-6
+startCommit: 79205c303255f28322f00a0ce0d2b7d6523c8c62
+---
+
+Tasks 2 and 3b complete. Wrote 59 passing BATS tests across 5 suites covering all scripts in project/scripts/:
+
+- tests/test_helper.bash: shared helpers (make_git_repo, write_context_entries)
+- tests/add-context.bats (18 tests): Task 2 scope (git-root resolution, auto-rotate, empty body) + Task 3b extras (arg validation, body inputs, --session field, entry format, append behaviour)
+- tests/read-context.bats (12 tests): git-root resolution, read/header modes, error cases
+- tests/rotate-context.bats (11 tests): no-rotation, rotation, overflow correctness, custom flags, error cases
+- tests/add-session-entry.bats (12 tests): arg validation, body inputs, file init/append, entry format
+- tests/notify.bats (4 tests): no-args guard, mocked curl success/error/empty-response paths
+
+Also updated project.md: merged Tasks 3 and 4 into a single Task 3 (3a: read-context fix [done], 3b: BATS suites). bats-core installed via brew (1.13.0); no bats-support/bats-assert dependency needed.
+
+Branch: task/3-read-context-git-root
+
+EOF
+
+
+---
+date: 2026-03-05T18:54:02-0500
+hash: qeMkSQYioL2rBdBko9+K1Gc1NJcBm6lzmLyqP6kYOxs=
+agent: Claude Code
+model: claude-sonnet-4-6
+startCommit: 6a705bc3de87ace4a495fb03f85815967b3ec7f8
+---
+
+Address CodeRabbit findings on PR #3.
+
+- project/project.md: corrected description of tests/test_helper.bash — it does not source bats-support/bats-assert; now accurately describes make_git_repo and write_context_entries utilities
+- tests/add-context.bats: tightened empty-body assertions to use grep -qi "empty" instead of loose *"mpty"*||*"Error"* pattern
+
+59/59 tests still passing. Branch: task/3-read-context-git-root
 
 EOF
 

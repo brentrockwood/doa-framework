@@ -3,7 +3,7 @@
 set -euo pipefail
 
 # Default values
-CONTEXT_FILE="context.md"
+CONTEXT_FILE=""
 NUM_ENTRIES=1
 SHOW_HEADERS_ONLY=false
 
@@ -16,7 +16,7 @@ Read the last N entries from context.md in reverse chronological order.
 
 Options:
   -n, --num N         Number of entries to read (default: 1)
-  -f, --file FILE     Context file to read (default: context.md)
+  -f, --file FILE     Context file to read (default: <git-root>/project/context.md)
   -h, --headers-only  Show only entry headers (date, hash, agent, model)
   --help              Show this help message
 
@@ -53,6 +53,15 @@ while [[ $# -gt 0 ]]; do
             ;;
     esac
 done
+
+# Resolve default file path
+if [[ -z "$CONTEXT_FILE" ]]; then
+    if git rev-parse --git-dir > /dev/null 2>&1; then
+        CONTEXT_FILE="$(git rev-parse --show-toplevel)/project/context.md"
+    else
+        CONTEXT_FILE="context.md"
+    fi
+fi
 
 # Validate file exists
 if [[ ! -f "$CONTEXT_FILE" ]]; then
