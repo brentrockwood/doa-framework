@@ -1,6 +1,7 @@
 # ============================================================
 # Secrets and credentials — NEVER commit these
 # ============================================================
+.env
 secrets.env
 credentials.json
 token.json
@@ -82,3 +83,4 @@ notes/
 /site
 docs/_build/
 target/
+bin/
