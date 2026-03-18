@@ -189,6 +189,7 @@ Complete this checklist before marking the interaction done:
      --output project/context.md \
      "Summary of what was done, what changed, what's next. Branch: <branch>"
    ```
+   - **Begin the entry body with a verbatim transcript of the human prompt that initiated this interaction.** Quote it exactly — do not paraphrase. Follow it with your summary.
    - Reference relevant steps in `project.md` where appropriate
    - Always include the current branch name
    - Think: "What would I need to know if this session crashed right now?"

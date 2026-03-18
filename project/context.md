@@ -181,3 +181,20 @@ Branch: feature/ai-clis-coderabbit-rust
 
 EOF
 
+
+---
+date: 2026-03-18T11:58:43-0400
+hash: c3kKRQrYGVn+OlgHxCVcxSBtecJ1xKLvUVj1aTvuWDo=
+agent: Claude Code
+model: claude-sonnet-4-6
+startCommit: 24f4a7774989f3d7871733369e7920088983c57c
+---
+
+Human prompt: "One more thing for this PR that I just remembered. When recording your per-interaction update in context.md via `add-context` I want the DOA to say that the agent should prepend a verbatim transcript of the human's prompt which initiated the interaction."
+
+Added rule to add-context step in "After every interaction" checklist: the entry body must begin with a verbatim transcript of the human prompt that initiated the interaction, quoted exactly before the summary. Synced project/doa.md → template/project/doa.md (files identical).
+
+Branch: feature/ai-clis-coderabbit-rust
+
+EOF
+
