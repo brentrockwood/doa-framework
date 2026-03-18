@@ -103,3 +103,98 @@ Address CodeRabbit findings on PR #3.
 
 EOF
 
+
+---
+date: 2026-03-18T11:36:34-0400
+hash: f74eMN8BymICNXvEjKrI6Q/4ltCgjlKAAL1RzDvcik4=
+agent: Claude Code
+model: claude-sonnet-4-6
+startCommit: 5e79692f4ef9815479fc691e70a055f0a487a0ed
+---
+
+Planning session for TODOs #10, #14, and #15. Replaced project/project.md with a new plan covering:
+- Phase 1 (#10): Install claude, codex, and coderabbit CLIs in postCreate.sh for all stacks; register coderabbit plugin with Claude Code.
+- Phase 2 (#14): Add agent-initiated CodeRabbit review rule to doa.md and template.
+- Phase 3 (#15): Rust stack support — stack-rust.md, devcontainers/rust/, postCreate.sh rust case, doa script detection, STACK_MODULE_TEMPLATE.md.
+
+Resolved open question: Node.js will be installed globally for all stacks (not typescript-only), which satisfies the Codex CLI npm dependency. Recorded as a ratified decision.
+
+Remaining open questions: (1) Claude CLI version pin, (3) NemoClaw lessons learned (prerequisite for Phase 3), (4) cargo-nextest vs cargo test, (5) Cargo workspace gate invocation.
+
+Branched: feature/ai-clis-coderabbit-rust
+
+EOF
+
+
+---
+date: 2026-03-18T11:46:47-0400
+hash: g80cGI89raDjVJC0s55V/hW9ObAbV8bhFX3T5QvVMWw=
+agent: Claude Code
+model: claude-sonnet-4-6
+startCommit: 5e79692f4ef9815479fc691e70a055f0a487a0ed
+---
+
+Implemented TODOs #10, #14, and #15. All open questions resolved before coding.
+
+Phase 1 (#10 — AI CLIs in postCreate.sh):
+- Node.js/nvm moved to common section (all stacks); resolves Codex npm dependency.
+- Added AI CLIs section (all stacks): claude (@latest via npm), codex (@latest via npm), coderabbit (@latest via install script).
+- Added CodeRabbit plugin registration with Claude Code, gated on both binaries present.
+- Added rust) case: cargo-audit, cargo-nextest --locked, cargo-watch.
+- Fixed pre-existing SC2155 shellcheck warning in go) case.
+- Updated header comment and footer summary.
+
+Phase 2 (#14 — CodeRabbit DOA rule):
+- Inserted step 5 "CodeRabbit review" in "After every interaction" checklist (between "Run tests" and "Commit"). Renumbered Commit → 6, Notify → 7.
+- Synced project/doa.md → template/project/doa.md (files identical).
+
+Phase 3 (#15 — Rust stack support):
+- Created template/project/doa/stack-rust.md (new extension module). Covers planning locks, coding style, error handling, testing (cargo-nextest), formatting/linting, security, send 'er gate, AI session logging.
+- Created devcontainers/rust/devcontainer.json (rust-analyzer, format-on-save, clippy as check command).
+- Added rust (option 4) to doa script stack selection menu. Updated commit message template.
+- target/ already present in template/.gitignore — no change needed.
+- Created docs/STACK_MODULE_TEMPLATE.md: fill-in-the-blank guide for adding future stacks.
+
+project/project.md: all open questions resolved and recorded as decisions.
+shellcheck clean on postCreate.sh and doa.
+
+Branch: feature/ai-clis-coderabbit-rust
+
+EOF
+
+
+---
+date: 2026-03-18T11:53:33-0400
+hash: 3D6ry2amPLfZ+BLvFDLCZJnxEhFfUIzaZMnATdGlQrw=
+agent: Claude Code
+model: claude-sonnet-4-6
+startCommit: 4abe7096ae14145cc41ddee1b944df70bccd11a9
+---
+
+Added trufflehog to send 'er security gate in all three locations:
+- Base send 'er (doa.md): step 1 now runs both scripts/security_scan.sh and trufflehog filesystem --only-verified .
+- Go stack gate (doa.md appendix): added steps 2 and 3 (security_scan.sh + trufflehog) after gosec; renumbered remaining steps.
+- Rust stack gate (stack-rust.md): added steps 2 and 3 after cargo audit; renumbered remaining steps.
+Synced project/doa.md → template/project/doa.md (files identical).
+
+Branch: feature/ai-clis-coderabbit-rust
+
+EOF
+
+
+---
+date: 2026-03-18T11:58:43-0400
+hash: c3kKRQrYGVn+OlgHxCVcxSBtecJ1xKLvUVj1aTvuWDo=
+agent: Claude Code
+model: claude-sonnet-4-6
+startCommit: 24f4a7774989f3d7871733369e7920088983c57c
+---
+
+Human prompt: "One more thing for this PR that I just remembered. When recording your per-interaction update in context.md via `add-context` I want the DOA to say that the agent should prepend a verbatim transcript of the human's prompt which initiated the interaction."
+
+Added rule to add-context step in "After every interaction" checklist: the entry body must begin with a verbatim transcript of the human prompt that initiated the interaction, quoted exactly before the summary. Synced project/doa.md → template/project/doa.md (files identical).
+
+Branch: feature/ai-clis-coderabbit-rust
+
+EOF
+

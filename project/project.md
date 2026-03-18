@@ -1,163 +1,275 @@
 # doa-framework
 
-## Purpose
+The DOA Framework is a system for structured AI agent collaboration on software
+projects. It consolidates the canonical rules document (`doa.md`), project
+scaffold (`template/`), and bootstrap script (`doa`) into a single repo that
+also governs itself via the DOA process.
 
-doa-framework is the single surviving repository for the DOA Framework — a
-system for structured AI agent collaboration on software projects.
+This `project.md` covers the current work cycle: **TODOs #10, #14, and #15**
+from `notes/TODO-2026-03-18.md`.
 
-It consolidates what was previously spread across four repos:
-- `new-project` → tool layer, now the `doa` script
-- `prjTemplate` → project scaffold, now `template/`
-- `doa` → canonical rules document, now `project/doa.md` and `template/project/doa.md`
-- `doa-framework` → README/overview, merged into this repo's README
+---
 
-## Ratified Decisions
+> **This document is write-locked after the initial planning session.**
+> Updates require explicit human authorization. See `doa.md`.
 
-- Single repo. All others deprecated.
+---
+
+## Ratified Decisions (carried forward)
+
+- Single repo. All predecessor repos deprecated.
 - Script renamed `new-project` → `doa`.
 - `prjTemplate` promoted to `template/` subdirectory.
 - Single canonical `doa.md`: `project/doa.md` is the source of truth.
-  `template/project/doa.md` is the copy planted into new projects.
-- `doa` uses local `template/` copy when available; falls back to remote clone.
-- This repo governs itself via the DOA process.
-- Testing framework: [BATS](https://github.com/bats-core/bats-core). All tests live in `./tests/`.
+  `template/project/doa.md` is the copy planted into new projects. Both must
+  be kept in sync after every change.
+- `doa` uses local `template/` when available; falls back to remote clone.
+- Testing framework: [BATS](https://github.com/bats-core/bats-core). All tests
+  live in `./tests/`.
+- `CLAUDE.md` and `AGENTS.md` contain a single line: `Read project/doa.md`.
+  No copies, no drift.
+
+---
+
+## Stack & Framework Decisions
+
+### Language & Runtime
+- **bash** — all scripts, `postCreate.sh`, `doa` bootstrap script
+- **Markdown** — DOA extension modules and documentation
+
+### Testing
+- **BATS 1.13.0** (installed via brew)
+- Test files: `tests/*.bats`
+- Shared helpers: `tests/test_helper.bash`
+- No bats-support / bats-assert dependency
+
+### Linting / Formatting
+- `shellcheck` on all shell scripts before commit
+- `shellcheck` must produce zero warnings
+
+### Security
+- `trufflehog` on changed files before push (already in `postCreate.sh`)
+- No credentials, tokens, or API keys in source
+
+---
 
 ## Open Questions
 
-<!-- To be resolved in first planning session -->
+> These must be resolved before or during the affected phase. Do not begin
+> implementation until the relevant question is answered.
+
+All open questions resolved. No blockers to implementation.
+
+1. ~~**[Phase 1] Claude CLI version pin**~~ — **Resolved:** `@latest` for all
+   three AI CLIs (claude, codex, coderabbit).
+
+2. ~~**[Phase 1] Codex CLI install method**~~ — **Resolved:** Node.js will be
+   installed globally for all stacks in `postCreate.sh`, not only in the
+   `typescript` case. Codex CLI (`npm install -g @openai/codex`) can run
+   unconditionally after the Node install step.
+
+3. ~~**[Phase 3] NemoClaw lessons learned**~~ — **Resolved:** Proceeding with
+   `stack-rust.md` as a first draft. NemoClaw lessons folded in as a follow-up
+   after that project is complete.
+
+4. ~~**[Phase 3] `cargo-nextest` vs `cargo test`**~~ — **Resolved:**
+   `cargo-nextest` in the gate. It is the de facto standard for serious Rust
+   projects — faster, better output. `cargo install cargo-nextest` added to the
+   rust devcontainer.
+
+5. ~~**[Phase 3] Workspace-level gate invocation**~~ — **Resolved:** Not an
+   issue. `cargo clippy -- -D warnings` and `cargo nextest run` work correctly
+   from the workspace root and cover all member crates automatically.
+
+---
+
+## Implementation Phases
+
+### Phase 1 — Task #10: AI CLIs in `postCreate.sh`
+
+Install Claude CLI, Codex CLI, and CodeRabbit CLI in all devcontainers.
+Register the CodeRabbit plugin with Claude Code after both are available.
+
+- [ ] Add a dedicated "AI CLIs" section to `postCreate.sh` (runs for all
+      stacks, after system packages and `gh` CLI install)
+- [ ] Install **Claude CLI** (`claude`). Pin to known-good version; document
+      pin rationale in a comment. Fail loudly on error.
+- [ ] Install **Codex CLI** (`codex`). Resolve Node dependency (see Open
+      Question #2) before this step. Pin version. Fail loudly on error.
+- [ ] Install **CodeRabbit CLI** (`coderabbit`) via the official install
+      script. Fail loudly on error.
+- [ ] After both Claude CLI and CodeRabbit CLI are confirmed installed,
+      register the plugin: `claude plugin install coderabbit`. Gate this
+      on successful install of both — skip with a warning if either failed.
+- [ ] Update summary block at the bottom of `postCreate.sh` to list the
+      new tools.
+- [ ] `shellcheck` on `postCreate.sh` — zero warnings.
+- [ ] BATS tests in `tests/postcreate.bats` (or extend existing suite):
+  - AI CLI section is present in the script
+  - Plugin registration is gated on prior install steps
+  - Failure in any CLI install causes a non-zero exit (mock install steps)
+
+---
+
+### Phase 2 — Task #14: Agent-Initiated CodeRabbit Reviews
+
+Add DOA rules requiring agents to request and act on CodeRabbit reviews after
+significant changesets.
+
+- [ ] Add CodeRabbit review rule to `project/doa.md` (after "After every
+      interaction" checklist, as a new subsection). Per TODO #14 spec:
+  - **Claude Code**: use `/coderabbit:review` (plugin path)
+  - **Other agents**: use `coderabbit --prompt-only --type uncommitted`
+  - Address all critical and major findings; ignore nits unless time permits
+  - One follow-up review after fixes
+  - Do not exceed 2 review cycles (rate limit: Pro 8/hour, Free 2/hour)
+  - On timeout or rate limit: log in context + notify via `scripts/notify`
+- [ ] Sync change to `template/project/doa.md`.
+- [ ] Confirm both files are identical after sync (diff must be empty).
+- [ ] `shellcheck` unchanged (markdown only, no shell impact).
+
+---
+
+### Phase 3 — Task #15: Rust Stack Support
+
+Four deliverables, sequenced. Resolve Open Questions #3–5 before starting.
+
+#### 3a — `doa/stack-rust.md` (new extension module)
+
+- [ ] Create `template/project/doa/stack-rust.md`
+- [ ] Contents (per TODO #15 spec):
+  - Detection condition: `Cargo.toml` at repo or workspace root
+  - Planning phase decisions (write-locked): crate type, async runtime
+    (Tokio default), error handling (`thiserror` for libs, `anyhow` for bins)
+  - Research gate: check `crates.io` before hand-rolling anything touching
+    parsing, serialization, HTTP, or crypto
+  - Coding standards: `clippy` zero warnings, doc comments on all public
+    items, no `unwrap()`/`expect()` in library code, no `unsafe` without
+    safety comment and human sign-off
+  - `rustfmt` clean before every commit
+  - `send 'er` gate (in order): `cargo audit`, `cargo fmt --check`,
+    `cargo clippy -- -D warnings`, `cargo test` (or `cargo-nextest` per
+    Open Question #4), `cargo build --release`
+  - Agentic sessions: `AI_SESSION.md` at workspace root
+- [ ] Readability bar: passes same review as `stack-go.md`
+
+#### 3b — `devcontainers/rust/devcontainer.json`
+
+- [ ] Create `devcontainers/rust/devcontainer.json` modelled on
+      `devcontainers/go/devcontainer.json`
+- [ ] Base image: official `rust` devcontainer image with `rustup` and
+      stable toolchain
+- [ ] `STACK=rust` set in `containerEnv`
+- [ ] VS Code extensions: `rust-lang.rust-analyzer`
+- [ ] VS Code settings: format on save, clippy as check tool
+- [ ] Note: projects that need a specific MSRV add `rust-toolchain.toml`
+      at repo root; devcontainer installs stable
+
+#### 3c — `postCreate.sh` — add `rust` case
+
+- [ ] Add `rust)` case to the `case "$STACK" in` block:
+  - `cargo install cargo-audit`
+  - `cargo install cargo-watch`
+  - Verify `rustfmt` and `clippy` are available (they ship with stable
+    toolchain via rustup)
+  - `ok` messages for each installed tool
+- [ ] Update valid STACK values in the `die` message and header comment
+- [ ] `shellcheck` clean
+- [ ] BATS test: rust case installs expected tools without error
+
+#### 3d — `doa` script — stack detection
+
+- [ ] Add `rust)` case to `check_stack()` function:
+      detection signal: `[[ -f "Cargo.toml" ]]`
+- [ ] Add `doa/stack-rust.md` to the module-loading section (consistent
+      with how Go and TS modules are loaded)
+- [ ] Add `target/` block to `step_write_gitignore()` for the rust case
+- [ ] `shellcheck` clean on `doa` script
+- [ ] BATS test: `doa` detects rust stack from a repo containing `Cargo.toml`
+
+#### 3e — `STACK_MODULE_TEMPLATE.md` (generalization pass)
+
+- [ ] After 3a is written and reviewed, do a generalization pass across
+      `stack-go.md`, `stack-rust.md`, and `template/project/doa.md`
+- [ ] Create `docs/STACK_MODULE_TEMPLATE.md` with fill-in-the-blank structure
+- [ ] Document what is universal (gate structure, planning locks, research
+      requirement) vs. what varies per stack (tools, detection signal,
+      gitignore patterns)
+- [ ] Acceptance criterion: a hypothetical `stack-python.md` could be written
+      from the template without referring to any existing stack module
+
+---
+
+## Decisions & Rationale
+
+### Node.js installed globally for all stacks
+- **Decision:** Node.js (via nvm) is installed for all stacks in
+  `postCreate.sh`, not only the `typescript` case.
+- **Rationale:** Codex CLI is npm-distributed and needed in every
+  devcontainer. Moving Node install to the common section is cleaner than
+  duplicating it or adding a conditional.
+- **Impact:** The `typescript` case can drop its nvm/Node install and rely
+  on the common section; it only needs to add pnpm, tsc, ts-node, and any
+  other TS-specific tools.
+
+### AI CLI install order in `postCreate.sh`
+- **Decision:** AI CLIs are installed as a common section after `gh` CLI,
+  before stack-specific tools.
+- **Rationale:** These tools are agent infrastructure, not stack-specific.
+  Every devcontainer should have them regardless of project language.
+- **Alternatives considered:** Stack-specific install (rejected — adds
+  duplication and means some devcontainers lack the tools).
+
+### CodeRabbit plugin registration gated on both CLI and Claude CLI
+- **Decision:** `claude plugin install coderabbit` only runs if both
+  `claude` and `coderabbit` binaries are confirmed present after install.
+- **Rationale:** Plugin registration against a missing binary produces an
+  opaque error. Explicit gating gives a clear failure message.
+
+### Rust async default: Tokio
+- **Decision:** Tokio is the assumed async runtime for Rust projects unless
+  a planning decision recorded in `project.md` specifies otherwise.
+- **Rationale:** Tokio is the dominant runtime in the ecosystem. The
+  commitment is harder to reverse in Rust than in Go or Python, so it must
+  be locked during planning.
+- **Alternatives considered:** `async-std` (smaller ecosystem), no async
+  (appropriate only for CPU-bound or synchronous projects — allowed with
+  explicit justification).
+
+### `@latest` for AI CLIs
+- **Decision:** Install claude, codex, and coderabbit CLIs at `@latest` in
+  `postCreate.sh`. No version pins.
+- **Rationale:** These tools evolve quickly; pinning creates maintenance
+  overhead. Breaking changes are acceptable risk given the devcontainer is
+  rebuilt infrequently and issues are caught immediately on first use.
+
+### `cargo-nextest` replaces `cargo test` in Rust gate
+- **Decision:** `cargo nextest run` is used in the `send 'er` gate, not
+  `cargo test`. `cargo install cargo-nextest` added to the rust devcontainer.
+- **Rationale:** Faster parallel execution, cleaner output, de facto standard
+  in the Rust ecosystem. No meaningful downside for new projects.
+
+### Error handling crates
+- **Decision:** `thiserror` for libraries, `anyhow` for binaries.
+- **Rationale:** Library crates should expose typed errors that callers can
+  match on; binary crates care about display and context, not type hierarchy.
+
+### `STACK_MODULE_TEMPLATE.md` location
+- **Decision:** `docs/STACK_MODULE_TEMPLATE.md`
+- **Rationale:** It is developer-facing documentation for framework
+  contributors, not an agent instruction file. Lives in `docs/` alongside
+  other developer docs.
+
+---
 
 ## Known Debt / Deferred Items
 
-- doa script patches are surgical sed replacements; verify behaviour on a
-  test project before deprecating old repos.
-- Framework versioning (TODO #2) not yet implemented.
-- See TODO.md for full deferred work list.
-
-## Task List
-
-### 1. Fix `project/scripts/add-context` — Three Improvements
-
-**a) Empty body detection**
-The script does not currently detect or reject empty body data. This was
-observed as a bug on the takehome project. Needs a guard that exits non-zero
-and reports a clear error if the body is empty regardless of input method
-(argument, file, or stdin).
-
-**b) Always target repo-root context file**
-The script currently writes to whatever context file is passed via
-`--output`, or defaults to the current directory. It should always resolve
-the output path to `$(git rev-parse --show-toplevel)/project/context.md`
-unless explicitly overridden. This removes a class of agent mistakes where
-the wrong file gets written because the agent is in a subdirectory or passes
-a relative path.
-
-**c) Auto-run `rotate-context` after every write**
-After successfully appending a context entry, `add-context` should
-automatically invoke `rotate-context`. `rotate-context` is idempotent and
-only rotates when the file exceeds its size threshold, so calling it
-unconditionally is safe. This removes a required step from the agent's
-end-of-session checklist, shrinks the DOA by one explicit instruction, and
-makes rotation impossible to forget.
-
-### 2. BATS tests for `project/scripts/add-context`
-
-Write a BATS test suite in `tests/add-context.bats` covering the behaviour
-introduced or confirmed in Task 1:
-
-**a) git-root resolution (Task 1b)**
-- Invoking `add-context` from a subdirectory without `--output` writes the
-  entry to `<repo-root>/project/context.md`.
-- Invoking with `--output custom.md` uses that path instead.
-- Invoking outside any git repo falls back to `./context.md`.
-
-**b) auto-rotate integration (Task 1c)**
-- After a successful write, `rotate-context` is called; its exit code 1
-  ("no rotation needed") does not cause `add-context` to fail.
-- When the output file exceeds the rotation threshold, rotation occurs and
-  an overflow file is created.
-
-**c) empty body rejection (Task 1a)**
-- Empty stdin → non-zero exit and a clear error message on stderr.
-- `--file` pointing to an empty file → same behaviour.
-
-Each test should set up an isolated temporary git repo, run the script, make
-assertions, and clean up. Use BATS helper libraries (`bats-support`,
-`bats-assert`) if they simplify assertions.
-
-### 3. Fix `project/scripts/read-context` + BATS tests for all scripts
-
-#### 3a. git-root resolution in `read-context` ✓ Complete (commit 79205c3)
-
-`read-context` defaulted to `./context.md` in the current directory — the same
-class of bug fixed in `add-context` (Task 1b). It now resolves its default file
-path to `$(git rev-parse --show-toplevel)/project/context.md` when inside a git
-repo, with `--file` as the explicit override, and falls back to `./context.md`
-outside a git repo.
-
-#### 3b. BATS test suites — all scripts
-
-Task 2 covers the three focused areas of `add-context`. This task adds full
-coverage across all scripts in `project/scripts/`. Tests live in `tests/` and
-share a common helper in `tests/test_helper.bash` (provides `make_git_repo`
-and `write_context_entries` utilities; no bats-support/bats-assert dependency).
-
-**`add-context` — beyond Task 2 scope** (`tests/add-context.bats`, extended)
-
-- **Required-arg validation**: missing `--agent` → non-zero exit + stderr error;
-  same for missing `--model`.
-- **Body input methods**: positional arg, `--file` (non-empty file), and stdin
-  each produce a correctly written entry.
-- **`--session` field**: when `--session` is passed, the session line appears in
-  the header; when omitted, it does not.
-- **Entry format**: written entry contains correct `date`, `hash`, `agent`,
-  `model`, and `startCommit` fields in expected positions.
-- **Append behaviour**: second call appends a new entry; a blank-line separator
-  appears between entries; first call creates the file.
-- **`--file` not found**: exits non-zero with a clear stderr message.
-
-**`read-context`** (`tests/read-context.bats`)
-
-- **git-root resolution**: invoking from a subdirectory (no `--file`) reads
-  `<repo-root>/project/context.md`; `--file` overrides; outside a git repo
-  falls back to `./context.md`.
-- **Default read**: no flags → prints last entry.
-- **`-n N`**: prints the last N entries in order.
-- **`--headers-only` / `-h`**: output contains header block but not body text.
-- **Combined `-n N -h`**: headers of last N entries.
-- **Error — file not found**: exits non-zero with stderr message.
-- **Error — invalid `-n`**: non-integer or zero → non-zero exit + stderr.
-- **Error — unknown option**: non-zero exit.
-
-**`rotate-context`** (`tests/rotate-context.bats`)
-
-- **No rotation needed** (file under size limit): exits 1, file unchanged.
-- **Rotation occurs** (file over limit, enough entries): exits 0; overflow file
-  created; original file contains exactly `--keep` most-recent entries; all
-  older entries appear in the overflow file.
-- **Over limit but ≤ keep entries**: warning to stderr, exits 1, no overflow
-  file created.
-- **File not found**: exits 2 with stderr message.
-- **Custom `--size` and `--keep`**: both flags respected in rotation logic.
-
-**`add-session-entry`** (`tests/add-session-entry.bats`)
-
-- **Required-arg validation**: missing `--agent` or `--model` → exit 1 +
-  stderr; invalid `--type` value → exit 1 + stderr.
-- **Body input methods**: positional arg, `--file`, stdin each write a valid
-  entry.
-- **Empty body**: exits 1 with stderr error regardless of input method.
-- **`--file` not found**: exits 1 with stderr error.
-- **File initialisation**: when output file does not exist, it is created with
-  the standard header before the first entry.
-- **Append behaviour**: second call appends without reinitialising the header.
-- **Entry format**: output contains `[$TYPE]`, agent, model, and date fields.
-
-**`notify`** (`tests/notify.bats`)
-
-- **No args**: exits 1 with usage message on stderr.
-- **Mocked success path**: stub `curl` to return `{"ok":true}`; script exits 0.
-- **Mocked API-error path**: stub `curl` to return `{"ok":false,"description":"bad token"}`; script exits 1 with the description on stderr.
-- **Network failure (empty response)**: stub `curl` to return empty string;
-  script exits 1.
-- Note: tests stub `curl` via a wrapper script injected at the front of `PATH`;
-  no real Telegram credentials required.
+- TODO #2 (framework versioning) and TODO #8 (modular DOA architecture)
+  are deferred until after this cycle. The module loading mechanism added
+  in Phase 3 is a forward-compatible placeholder.
+- TODO #11 (persist auth across container rebuilds) and TODO #13
+  (env var injection) are prerequisites for full CodeRabbit auth in
+  devcontainers. The Phase 1 install work is functional without them but
+  auth must be configured manually in new containers until #11/#13 land.
+- `cargo-nextest` decision (Open Question #4) deferred to planning
+  conversation before Phase 3 begins.
