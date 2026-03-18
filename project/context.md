@@ -219,3 +219,24 @@ Branch: feature/ai-clis-coderabbit-rust
 
 EOF
 
+
+---
+date: 2026-03-18T12:51:17-0400
+hash: zbZHeIT06TnuforPOKPpYiojZur+KGlCtUZ4Bm/kGq0=
+agent: Claude Code
+model: claude-sonnet-4-6
+startCommit: 302e59249ccb5e146b34238fca323fceea6e16ce
+---
+
+Human prompt: "send 'er"
+
+Prior prompt: postCreate.sh was failing at `claude plugin install coderabbit` — the plugin is not available in any configured marketplace. User confirmed they're OK without it since the DOA already uses the coderabbit bash CLI directly. Removed the plugin registration block entirely.
+
+Changes: postCreate.sh — removed the "Registering CodeRabbit plugin with Claude Code" step block.
+
+Send 'er gate: security scan passed, all 59 bats tests passed.
+
+Branch: feature/ai-clis-coderabbit-rust
+
+EOF
+
