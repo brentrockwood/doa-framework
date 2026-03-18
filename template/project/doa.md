@@ -212,12 +212,20 @@ Complete this checklist before marking the interaction done:
    - Report test additions/modifications
    - Note any skipped tests with reasons
 
-5. **Commit** (recommended after each interaction)
+5. **CodeRabbit review** (after a significant changeset, before committing)
+   - **Claude Code**: run `/coderabbit:review uncommitted` (or `committed` as appropriate). Reviews take 7–30+ minutes; check back periodically.
+   - **Other agents**: run `coderabbit --prompt-only --type uncommitted` and act on the output.
+   - Address all critical and major findings. Ignore nits unless time permits.
+   - Run one follow-up review to confirm fixes did not introduce new issues.
+   - Do not exceed 2 review cycles per session (rate limit: Pro 8/hour, Free 2/hour).
+   - If the review times out or the rate limit is hit, log it in the context entry and notify via `scripts/notify`.
+
+6. **Commit** (recommended after each interaction)
    - Stage changed files — **context entry must be included**
    - Write a clear commit message (see Commit Messages section)
    - Do NOT push — only humans can push
 
-6. **Notify** Unless it has been a no-code-change short interaction, use `scripts/notify` to notify the human of your status.
+7. **Notify** Unless it has been a no-code-change short interaction, use `scripts/notify` to notify the human of your status.
 
 ---
 

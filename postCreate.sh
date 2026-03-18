@@ -2,15 +2,22 @@
 # postCreate.sh — Runs once inside the devcontainer after creation.
 # Called by devcontainer.json postCreateCommand.
 #
-# Installs:
+# Installs (all stacks):
 #   - dotfiles (brentrockwood/dotfiles)
 #   - Shell tools your .zshrc expects: zoxide, fzf, starship, neovim, tmux
 #   - trufflehog (for security scanning)
 #   - gh CLI
-#   - Stack-specific tools (driven by STACK env var from devcontainer.json)
+#   - Node.js 22 LTS via nvm (required by AI CLIs)
+#   - AI CLIs: claude, codex, coderabbit + Claude Code coderabbit plugin
+#
+# Installs (stack-specific, driven by STACK env var from devcontainer.json):
+#   - python: uv, Python 3.12
+#   - typescript: pnpm, tsc, ts-node
+#   - go: goimports, golangci-lint, gosec, godoc
+#   - rust: cargo-audit, cargo-nextest, cargo-watch
 #
 # STACK env var must be set in devcontainer.json to one of:
-#   python | typescript | go
+#   python | typescript | go | rust
 
 set -euo pipefail
 
@@ -125,6 +132,50 @@ fi
 sudo chsh -s "$ZSH_PATH" "$(whoami)"
 ok "Default shell set to zsh"
 
+# ── Node.js (all stacks — required by AI CLIs and typescript tooling) ─────────
+step "Installing Node.js 22 LTS via nvm"
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.0/install.sh | bash
+export NVM_DIR="$HOME/.nvm"
+# shellcheck source=/dev/null
+source "$NVM_DIR/nvm.sh"
+nvm install 22
+nvm alias default 22
+nvm use default
+ok "Node $(node --version) installed via nvm"
+
+# ── AI CLIs (all stacks) ──────────────────────────────────────────────────────
+step "Installing AI CLIs"
+
+# Claude CLI
+npm install -g @anthropic-ai/claude-code
+if ! command -v claude &>/dev/null; then
+  die "claude CLI installed but not found in PATH"
+fi
+ok "claude installed ($(claude --version 2>&1 | head -1))"
+
+# Codex CLI
+npm install -g @openai/codex
+if ! command -v codex &>/dev/null; then
+  die "codex CLI installed but not found in PATH"
+fi
+ok "codex installed ($(codex --version 2>&1 | head -1))"
+
+# CodeRabbit CLI
+curl -fsSL https://cli.coderabbit.ai/install.sh | sh
+if ! command -v coderabbit &>/dev/null; then
+  die "coderabbit CLI installed but not found in PATH"
+fi
+ok "coderabbit installed ($(coderabbit --version 2>&1 | head -1))"
+
+# Register CodeRabbit plugin with Claude Code (requires both claude and coderabbit)
+step "Registering CodeRabbit plugin with Claude Code"
+if command -v claude &>/dev/null && command -v coderabbit &>/dev/null; then
+  claude plugin install coderabbit
+  ok "CodeRabbit plugin registered with Claude Code"
+else
+  warn "Skipping plugin registration — claude or coderabbit not available"
+fi
+
 # ── Stack-specific tools ──────────────────────────────────────────────────────
 step "Installing stack tools: $STACK"
 case "$STACK" in
@@ -140,19 +191,10 @@ case "$STACK" in
     ;;
 
   typescript)
-    # Install nvm → Node 22 LTS
-    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.0/install.sh | bash
-    export NVM_DIR="$HOME/.nvm"
-    # shellcheck source=/dev/null
-    source "$NVM_DIR/nvm.sh"
-    nvm install 22
-    nvm alias default 22
-    nvm use default
-    # pnpm
+    # Node.js is installed in the common section above.
+    # This case adds TypeScript-specific global packages only.
     npm install -g pnpm
-    # TypeScript compiler
     npm install -g typescript ts-node
-    ok "Node $(node --version) installed via nvm"
     ok "pnpm $(pnpm --version) installed"
     ok "TypeScript $(tsc --version) installed"
     ;;
@@ -167,15 +209,29 @@ case "$STACK" in
     # godoc: local documentation server
     go install golang.org/x/tools/cmd/godoc@latest
     # Add Go bin to PATH for this session (dotfiles will handle future shells)
-    export PATH="$PATH:$(go env GOPATH)/bin"
+    GOPATH="$(go env GOPATH)"
+    export PATH="$PATH:$GOPATH/bin"
     ok "goimports installed"
     ok "golangci-lint installed ($(golangci-lint --version))"
     ok "gosec installed ($(gosec --version 2>&1 | head -1))"
     ok "godoc installed"
     ;;
 
+  rust)
+    # rustfmt and clippy ship with the stable toolchain via rustup.
+    # These installs add audit, test runner, and dev-loop tooling.
+    cargo install cargo-audit
+    cargo install cargo-nextest --locked
+    cargo install cargo-watch
+    ok "cargo-audit installed ($(cargo audit --version 2>&1 | head -1))"
+    ok "cargo-nextest installed ($(cargo nextest --version 2>&1 | head -1))"
+    ok "cargo-watch installed ($(cargo watch --version 2>&1 | head -1))"
+    ok "rustfmt available ($(rustfmt --version 2>&1 | head -1))"
+    ok "clippy available ($(cargo clippy --version 2>&1 | head -1))"
+    ;;
+
   *)
-    die "Unknown STACK: $STACK. Valid values: python, typescript, go"
+    die "Unknown STACK: $STACK. Valid values: python, typescript, go, rust"
     ;;
 esac
 
@@ -187,7 +243,7 @@ echo -e "${GREEN}${BOLD}╚═════════════════�
 echo ""
 echo -e "  Stack: ${BOLD}$STACK${NC}"
 echo -e "  Shell: zsh (vi mode, starship prompt)"
-echo -e "  Tools: nvim, tmux, zoxide, fzf, gh, trufflehog"
+echo -e "  Tools: nvim, tmux, zoxide, fzf, gh, trufflehog, node, claude, codex, coderabbit"
 echo ""
 echo -e "  ${YELLOW}Note: Open a new shell or run 'exec zsh' for full environment.${NC}"
 echo ""

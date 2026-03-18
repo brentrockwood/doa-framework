@@ -120,14 +120,16 @@ echo -e "  ${BOLD}Stack:${NC}"
 echo "    1) python"
 echo "    2) typescript"
 echo "    3) go"
+echo "    4) rust"
 echo ""
-echo -e "  Choice [1/2/3]: \c"
+echo -e "  Choice [1/2/3/4]: \c"
 read -r STACK_CHOICE
 
 case "$STACK_CHOICE" in
   1) STACK="python" ;;
   2) STACK="typescript" ;;
   3) STACK="go" ;;
+  4) STACK="rust" ;;
   *) die "Invalid choice: $STACK_CHOICE" ;;
 esac
 
@@ -267,7 +269,8 @@ git commit -m "DevContainer: add $STACK devcontainer
 Includes postCreate.sh which installs:
 - dotfiles (brentrockwood/dotfiles)
 - zsh, neovim, tmux, zoxide, fzf, starship
-- trufflehog, gh CLI
+- trufflehog, gh CLI, node
+- AI CLIs: claude, codex, coderabbit (+ Claude Code coderabbit plugin)
 - Stack tools: $STACK"
 
 git push -u origin initial-scaffold
