@@ -170,14 +170,6 @@ if ! command -v coderabbit &>/dev/null; then
 fi
 ok "coderabbit installed ($(coderabbit --version 2>&1 | head -1))"
 
-# Register CodeRabbit plugin with Claude Code (requires both claude and coderabbit)
-step "Registering CodeRabbit plugin with Claude Code"
-if command -v claude &>/dev/null && command -v coderabbit &>/dev/null; then
-  claude plugin install coderabbit
-  ok "CodeRabbit plugin registered with Claude Code"
-else
-  warn "Skipping plugin registration — claude or coderabbit not available"
-fi
 
 # ── Stack-specific tools ──────────────────────────────────────────────────────
 step "Installing stack tools: $STACK"
