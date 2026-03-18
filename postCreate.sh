@@ -162,6 +162,9 @@ ok "codex installed ($(codex --version 2>&1 | head -1))"
 
 # CodeRabbit CLI
 curl -fsSL https://cli.coderabbit.ai/install.sh | sh
+grep -qxF 'export PATH="$HOME/.local/bin:$PATH"' ~/.zshrc \
+  || echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
+export PATH="$HOME/.local/bin:$PATH"
 if ! command -v coderabbit &>/dev/null; then
   die "coderabbit CLI installed but not found in PATH"
 fi
@@ -182,7 +185,9 @@ case "$STACK" in
   python)
     # Install uv (fast Python package/project manager)
     curl -LsSf https://astral.sh/uv/install.sh | sh
-    # uv installs into ~/.cargo/bin or ~/.local/bin — add to current PATH
+    # uv installs into ~/.local/bin — persist for future shells and add to current PATH
+    grep -qxF 'export PATH="$HOME/.local/bin:$PATH"' ~/.zshrc \
+      || echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
     export PATH="$HOME/.local/bin:$PATH"
     # Install Python 3.12 via uv
     uv python install 3.12

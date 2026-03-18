@@ -198,3 +198,24 @@ Branch: feature/ai-clis-coderabbit-rust
 
 EOF
 
+
+---
+date: 2026-03-18T12:37:18-0400
+hash: dtYqTM59O8JF1HxcUrIG2WCAEFSVkLKpMQ2cJ/nZGbM=
+agent: Claude Code
+model: claude-sonnet-4-6
+startCommit: 40515b994c19b87318eb640f79c76899ed922429
+---
+
+Human prompt: "send 'er"
+
+Prior prompt context: postCreate.sh was failing with "coderabbit CLI installed but not found in PATH". Fixed by adding `~/.local/bin` to PATH after the coderabbit install. User then noted that `export` statements need to survive devcontainer reboots, so the fix was extended to also append the PATH line to `~/.zshrc` (guarded by a duplicate check). The same persistent fix was applied to the `uv` install in the python stack, which had the identical problem.
+
+Changes: postCreate.sh — added `grep -qxF ... || echo ... >> ~/.zshrc` and `export PATH` after both the coderabbit and uv installs.
+
+Send 'er gate: security scan passed, all 59 bats tests passed, no build step required.
+
+Branch: feature/ai-clis-coderabbit-rust
+
+EOF
+
