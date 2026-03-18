@@ -99,15 +99,17 @@ addition:
 When the human says "send 'er", execute in this order:
 
 1. `cargo audit` — exit 0. Moderate+ findings must be resolved or documented.
-2. `cargo fmt --check` — must produce no output (all files formatted).
-3. `cargo clippy -- -D warnings` — zero warnings, zero errors.
-4. `cargo nextest run` — all tests must pass.
-5. `cargo build --release` — must succeed with no errors or warnings.
-6. Add context entry via `project/scripts/add-context`.
-7. Add session summary via `project/scripts/add-session-entry --type summary`.
-8. Show: branch name, files changed, commits to push.
-9. Prompt: "Ready to push to origin? (y/n)" — wait for confirmation.
-10. Push to origin. Open a pull request.
+2. `bash scripts/security_scan.sh` — must exit 0.
+3. `trufflehog filesystem --only-verified .` — must exit 0.
+4. `cargo fmt --check` — must produce no output (all files formatted).
+5. `cargo clippy -- -D warnings` — zero warnings, zero errors.
+6. `cargo nextest run` — all tests must pass.
+7. `cargo build --release` — must succeed with no errors or warnings.
+8. Add context entry via `project/scripts/add-context`.
+9. Add session summary via `project/scripts/add-session-entry --type summary`.
+10. Show: branch name, files changed, commits to push.
+11. Prompt: "Ready to push to origin? (y/n)" — wait for confirmation.
+12. Push to origin. Open a pull request.
 
 ---
 

@@ -162,3 +162,22 @@ Branch: feature/ai-clis-coderabbit-rust
 
 EOF
 
+
+---
+date: 2026-03-18T11:53:33-0400
+hash: 3D6ry2amPLfZ+BLvFDLCZJnxEhFfUIzaZMnATdGlQrw=
+agent: Claude Code
+model: claude-sonnet-4-6
+startCommit: 4abe7096ae14145cc41ddee1b944df70bccd11a9
+---
+
+Added trufflehog to send 'er security gate in all three locations:
+- Base send 'er (doa.md): step 1 now runs both scripts/security_scan.sh and trufflehog filesystem --only-verified .
+- Go stack gate (doa.md appendix): added steps 2 and 3 (security_scan.sh + trufflehog) after gosec; renumbered remaining steps.
+- Rust stack gate (stack-rust.md): added steps 2 and 3 after cargo audit; renumbered remaining steps.
+Synced project/doa.md → template/project/doa.md (files identical).
+
+Branch: feature/ai-clis-coderabbit-rust
+
+EOF
+

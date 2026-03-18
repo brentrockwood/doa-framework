@@ -278,7 +278,10 @@ You will have been reporting your progress after each interaction. When I declar
 
 The phrase **send 'er** is a command which has been chosen because it is unlikely to come up in normal discussion. It is a specific command comprised of the following steps:
 
-1. Run a security scan on the entire project. If any substitutions were required, report to me.
+1. Run the full security scan on the entire project:
+   - `bash scripts/security_scan.sh` — grep-based pattern scan and git history check
+   - `trufflehog filesystem --only-verified .` — ML-based secrets detection
+   Both must pass (exit 0). If any findings are reported, report to me before proceeding.
 2. If any file changes have occurred since the last test run, run all tests. All tests must pass. If not, report to me.
 3. If any code changes have occurred since the last linter run, run the linter. It must not report any errors or warnings. If it does, report to me.
 4. If a build is required, run it. If any errors or warnings are reported, report them to me, along with any insight or suggestions to fix them.
@@ -421,16 +424,18 @@ In addition:
 When the human says "send 'er", execute in this order:
 
 1. `gosec ./...` — report all findings. Block on HIGH severity.
-2. `goimports -l .` — must produce no output (all files formatted).
-3. `go vet ./...` — must be clean.
-4. `golangci-lint run ./...` — must be clean.
-5. `go test -race -count=1 ./...` — all tests must pass.
-6. `go build ./...` — must succeed.
-7. Add context entry via `project/scripts/add-context`.
-8. Add session summary via `project/scripts/add-session-entry --type summary`.
-9. Show: branch name, files changed, commits to push.
-10. Prompt: "Ready to push to origin? (y/n)" — wait for confirmation.
-11. Push to origin. Open a pull request.
+2. `bash scripts/security_scan.sh` — must exit 0.
+3. `trufflehog filesystem --only-verified .` — must exit 0.
+4. `goimports -l .` — must produce no output (all files formatted).
+5. `go vet ./...` — must be clean.
+6. `golangci-lint run ./...` — must be clean.
+7. `go test -race -count=1 ./...` — all tests must pass.
+8. `go build ./...` — must succeed.
+9. Add context entry via `project/scripts/add-context`.
+10. Add session summary via `project/scripts/add-session-entry --type summary`.
+11. Show: branch name, files changed, commits to push.
+12. Prompt: "Ready to push to origin? (y/n)" — wait for confirmation.
+13. Push to origin. Open a pull request.
 
 ### AI Session Logging
 
